@@ -13,8 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copia todo o conteúdo da pasta local para o diretório de trabalho no container
 COPY . .
 
-# Expõe a porta que o WebSocket está usando
-EXPOSE 6789
+# Expõe a porta 3000 para o WebSocket
+EXPOSE 3000
 
 # Comando para rodar o script principal
 CMD ["python", "monitor.py"]

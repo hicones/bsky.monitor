@@ -43,8 +43,8 @@ async def websocket_handler(websocket, path):
         print(f"Conexão encerrada com {websocket.remote_address}")
 
 async def start_server():
-    server = await websockets.serve(websocket_handler, "localhost", 6789)
-    print("Servidor WebSocket online em ws://localhost:6789")
+    server = await websockets.serve(websocket_handler, "0.0.0.0", 3000)
+    print("Servidor WebSocket online em ws://localhost:3000")
     await server.wait_closed()
 
 def init_db():

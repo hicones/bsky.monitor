@@ -3,9 +3,13 @@ import sqlite3
 import requests
 import asyncio
 import websockets
+import json
+from urllib.parse import urlparse, parse_qs
 from dotenv import load_dotenv
 
 load_dotenv()
+
+VALID_TOKENS = set(os.getenv("VALID_TOKENS").split(","))
 
 profile_ids = os.getenv("PROFILE_IDS").split(",")
 
@@ -13,18 +17,34 @@ connected_clients = set()
 
 async def notify_clients(new_post):
     if connected_clients:
-        await asyncio.wait([client.send(new_post) for client in connected_clients])
+        print(f"Notificação enviada para {len(connected_clients)} clientes: {new_post}")
+        await asyncio.gather(*(client.send(new_post) for client in connected_clients))
 
 async def websocket_handler(websocket, path):
+    query_params = parse_qs(urlparse(path).query)
+    token = query_params.get("token", [None])[0]
+
+    if token is None or token not in VALID_TOKENS:
+        await websocket.close(reason="Token de autenticação inválido ou não fornecido")
+        return
+
     connected_clients.add(websocket)
+    print(f"Conexão estabelecida com {websocket.remote_address}")
+
     try:
         async for message in websocket:
-            pass
+            print(f"Mensagem recebida de {websocket.remote_address}: {message}")
+
+    except websockets.ConnectionClosed as e:
+        print(f"Conexão fechada com {websocket.remote_address}: {e}")
+
     finally:
         connected_clients.remove(websocket)
+        print(f"Conexão encerrada com {websocket.remote_address}")
 
 async def start_server():
     server = await websockets.serve(websocket_handler, "localhost", 6789)
+    print("Servidor WebSocket online em ws://localhost:6789")
     await server.wait_closed()
 
 def init_db():
@@ -67,13 +87,18 @@ async def monitor_profiles():
                 for post_data in posts:
                     post = post_data["post"]
                     post_id = post["cid"]
-                    content = post["record"]["text"]
-                    author = post["author"]["displayName"]
                     if not post_cid_exists(post_id):
                         save_post_cid(post_id)
-                        await notify_clients(f"Novo post de {author}: {content}")
-        await asyncio.sleep(60)
+                        print(f"Novo post detectado: {post}")
+                        await notify_clients(json.dumps(post))
+        await asyncio.sleep(30)
 
 init_db()
-asyncio.get_event_loop().create_task(monitor_profiles())
-asyncio.get_event_loop().run_until_complete(start_server())
+
+async def main():
+    await asyncio.gather(
+        start_server(),
+        monitor_profiles()
+    )
+
+asyncio.run(main())

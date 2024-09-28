@@ -1,25 +1,19 @@
-# Usar a imagem oficial do Python como base
-FROM python:3.9-slim
+# Utiliza uma imagem base oficial do Python 3.12 slim
+FROM python:3.12-slim
 
-# Definir o diretório de trabalho dentro do container
+# Define o diretório de trabalho dentro do container
 WORKDIR /app
 
-# Copiar o arquivo de dependências
-COPY requirements.txt requirements.txt
+# Copia o arquivo requirements.txt para o container
+COPY requirements.txt .
 
-# Instalar as dependências
+# Instala as dependências do Python listadas no requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar o restante dos arquivos do projeto para o container
+# Copia todo o conteúdo da pasta local para o diretório de trabalho no container
 COPY . .
 
-# Definir a variável de ambiente para não gerar arquivos .pyc
-ENV PYTHONDONTWRITEBYTECODE 1
-
-# Definir a variável de ambiente para a saída do buffer ser exibida (importante para logs)
-ENV PYTHONUNBUFFERED 1
-
-# Expor a porta 6789 (porta do WebSocket)
+# Expõe a porta que o WebSocket está usando
 EXPOSE 6789
 
 # Comando para rodar o script principal

@@ -72,7 +72,7 @@ def post_cid_exists(post_id):
     return exists
 
 def get_profile_posts(profile_id):
-    url = f"https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor={profile_id}"
+    url = f"https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor={profile_id}&limit=10"
     response = requests.get(url)
     if response.status_code == 200:
         return response.json().get("feed", [])
